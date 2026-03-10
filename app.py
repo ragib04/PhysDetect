@@ -52,7 +52,7 @@ current_time = 0
 # -------------------------------
 # Webcam
 # -------------------------------
- view == 1:
+if view == 1:
     cap = cv2.VideoCapture(4)
 else:
     cap = cv2.VideoCapture(2)
@@ -179,10 +179,10 @@ with mp_pose.Pose(
                     print("ok")
                     csv_writer.writerow([
                         datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        int(angles["R-Elbow"][0]),
-                        int(angles["R-Shoulder"][0]),
-                        int(angles["R-Hip"][0]),
-                        int(angles["R-Knee"][0]),
+                        int(angles["L-Elbow"][0]),
+                        int(angles["L-Shoulder"][0]),
+                        int(angles["L-Hip"][0]),
+                        int(angles["L-Knee"][0]),
                     ])
                     last_saved_time = current_time
             mp_draw.draw_landmarks(
