@@ -82,67 +82,61 @@ int main(void) {
 
     client_fd = accept(server_fd, NULL, NULL);
     if (client_fd < 0) {
-      perror("accept");
-      goto cleanup;
+        perror("accept");
+        goto cleanup;
     }
 
     ssl = SSL_new(ctx);
     SSL_set_fd(ssl, client_fd);
 
     if (SSL_accept(ssl) <= 0) {
-      ERR_print_errors_fp(stderr);
-      goto cleanup;
+        ERR_print_errors_fp(stderr);
+        goto cleanup;
     }
 
     printf("TLS client connected using %s\n", SSL_get_cipher(ssl));
 
-    while(1) {
-      char filename[FILENAME_SIZE + 1];
-      memset(filename, 0, sizeof(filename));
+    char filename[FILENAME_SIZE + 1];
+    memset(filename, 0, sizeof(filename));
 
-      if (ssl_read_all(ssl, filename, FILENAME_SIZE) < 0) {
+    if (ssl_read_all(ssl, filename, FILENAME_SIZE) < 0) {
         fprintf(stderr, "Failed to read filename\n");
         goto cleanup;
-      }
+    }
 
-      filename[FILENAME_SIZE] = '\0';
+    filename[FILENAME_SIZE] = '\0';
 
-      uint32_t net_size;
-      if (ssl_read_all(ssl, &net_size, sizeof(net_size)) < 0) {
+    uint32_t net_size;
+    if (ssl_read_all(ssl, &net_size, sizeof(net_size)) < 0) {
         fprintf(stderr, "Failed to read file size\n");
         goto cleanup;
-      }
+    }
 
-      uint32_t file_size = ntohl(net_size);
-      printf("Receiving '%s' (%u bytes)\n", filename, file_size);
+    uint32_t file_size = ntohl(net_size);
+    printf("Receiving '%s' (%u bytes)\n", filename, file_size);
 
-      if (strcmp(filename, "end") == 0) {
-	break;
-      }
-
-      FILE *fp = fopen(filename, "wb");
-      if (!fp) {
+    FILE *fp = fopen(filename, "wb");
+    if (!fp) {
         perror("fopen");
         goto cleanup;
-      }
+    }
 
-      uint8_t buffer[BUFFER_SIZE];
-      uint32_t remaining = file_size;
+    uint8_t buffer[BUFFER_SIZE];
+    uint32_t remaining = file_size;
 
-      while (remaining > 0) {
+    while (remaining > 0) {
         size_t chunk = remaining < BUFFER_SIZE ? remaining : BUFFER_SIZE;
         if (ssl_read_all(ssl, buffer, chunk) < 0) {
-	  fprintf(stderr, "Failed during file receive\n");
-	  fclose(fp);
-	  goto cleanup;
+            fprintf(stderr, "Failed during file receive\n");
+            fclose(fp);
+            goto cleanup;
         }
         fwrite(buffer, 1, chunk, fp);
         remaining -= chunk;
-      }
-
-      fclose(fp);
-      printf("File saved successfully.\n");
     }
+
+    fclose(fp);
+    printf("File saved successfully.\n");
 
 cleanup:
     if (ssl) {

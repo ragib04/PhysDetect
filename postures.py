@@ -20,58 +20,17 @@ def check():
         print("Re-enter what to check for")
 
 
-def check_pos(pos_name, angles, frame):
-
-    if pos_name != "squat":
-        return
-
-    hip_angle = angles['L-Hip'][0]
-    knee_angle = angles['L-Knee'][0]
-
-    # -------------------------
-    # Standing Position
-    # -------------------------
-    if hip_angle > 160 and knee_angle > 160:
-        resize_put(frame,
-                   "Start Squat: Bend hips and knees",
-                   (30, 50),
-                   cv2.FONT_HERSHEY_SIMPLEX,
-                   0.7,
-                   (0, 0, 255),
-                   2)
-
-    # -------------------------
-    # Correct Squat Depth
-    # -------------------------
-    elif 70 <= hip_angle <= 100 and 70 <= knee_angle <= 100:
-        cv2.putText(frame,
-                    "Good Squat!",
-                    (30, 50),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.9,
-                    (0, 255, 0),
-                    2)
-
-    # -------------------------
-    # Too Deep
-    # -------------------------
-    elif hip_angle < 60:
-        cv2.putText(frame,
-                    "Too Deep - Come Up Slightly",
-                    (30, 50),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.8,
-                    (0, 0, 255),
-                    2)
-
-    # -------------------------
-    # Not Deep Enough
-    # -------------------------
-    elif knee_angle > 120:
-        cv2.putText(frame,
-                    "Go Lower",
-                    (30, 50),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.8,
-                    (0, 0, 255),
-                    2)
+def check_pos(pos_name, angles, frame, view):
+    if pos_name == "squat":
+        if view == "SIDE VIEW":
+            if angles['R-Hip'][0] > 150 and angles['R-Knee'][0] > 150:
+                resize_put(frame, f"Move your hips back slowly keeping your chest up and bend your knees", (30,50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3)
+        else:
+            if angles['R-Hip'][0] < 45:
+                resize_put(frame, f"Move your back up", (30,50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3)
+            elif angles['R-Hip'][0] > 80:
+                cv2.putText(frame, f"Move your back down", (30,50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3)
+            if angles['R-Knee'][0] < 70:
+                cv2.putText(frame, f"Move your knee up", (30,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3)
+            elif angles['R-Knee'][0] > 95:
+                cv2.putText(frame, f"Move your knee down", (30,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3)

@@ -8,6 +8,17 @@ from datetime import datetime
 import postures as ps
 import view_detection as vd
 
+print("Select view:")
+print("1. Front view")
+print("2. Side view")
+
+
+csv_filename = ""
+csv_file = None
+csv_writer = None
+
+view = int(input())
+
 # -------------------------------
 # MediaPipe setup
 # -------------------------------
@@ -34,30 +45,47 @@ if pos_name == "quit":
 # -------------------------------
 # CSV Setup
 # -------------------------------
-csv_filename = "angles.csv"
-csv_file = open(csv_filename, "w", newline="", encoding="utf-8")
-csv_writer = csv.writer(csv_file)
-
-csv_writer.writerow([
-    "Timestamp",
-    "L_Elbow", "R_Elbow",
-    "L_Shoulder", "R_Shoulder",
-    "L_Hip", "R_Hip",
-    "L_Knee", "R_Knee"
-])
 
 last_saved_time = time.time() * 1000
+current_time = 0
 
 # -------------------------------
 # Webcam
 # -------------------------------
-cap = cv2.VideoCapture(0)
+ view == 1:
+    cap = cv2.VideoCapture(4)
+else:
+    cap = cv2.VideoCapture(2)
+if view == 1:
+    csv_filename = "front_angles.csv"
+    csv_file = open(csv_filename, "w", newline="", encoding="utf-8")
+    csv_writer = csv.writer(csv_file)
+    csv_writer.writerow([
+        "Timestamp",
+        "L_Elbow", "R_Elbow",
+        "L_Shoulder", "R_Shoulder",
+        "L_Hip", "R_Hip",
+        "L_Knee", "R_Knee"
+    ])
+
+else:
+    csv_filename = "side_angles.csv"
+    csv_file = open(csv_filename, "w", newline="", encoding="utf-8")
+    csv_writer = csv.writer(csv_file)
+    csv_writer.writerow([
+        "Timestamp",
+        "L_Elbow",
+        "L_Shoulder",
+        "L_Hip",
+        "L_Knee"
+    ])
+
 
 with mp_pose.Pose(
-    static_image_mode=False,
-    model_complexity=1,
-    min_detection_confidence=0.5,
-    min_tracking_confidence=0.5
+        static_image_mode=False,
+        model_complexity=1,
+        min_detection_confidence=0.5,
+        min_tracking_confidence=0.5
 ) as pose:
 
     while True:
@@ -114,27 +142,49 @@ with mp_pose.Pose(
                             2)
 
             # ✅ View detection (UPDATED CALL)
-            vd.detect_view(frame, lm, w, h)
+            v = vd.detect_view(frame, lm, w, h)
 
-            # Posture feedback
-            ps.check_pos(pos_name, angles, frame)
+            if not ((v == "FRONT VIEW" and view == 1) or (v == "SIDE VIEW" and view == 2)):
+                vv = ""
+                if view == 1:
+                    vv = "front view"
+                else:
+                    vv = "side view"
 
-            # Save to CSV every 1 second
-            current_time = time.time() * 1000
-            if current_time - last_saved_time >= 1000:
-                csv_writer.writerow([
-                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    int(angles["L-Elbow"][0]),
-                    int(angles["R-Elbow"][0]),
-                    int(angles["L-Shoulder"][0]),
-                    int(angles["R-Shoulder"][0]),
-                    int(angles["L-Hip"][0]),
-                    int(angles["R-Hip"][0]),
-                    int(angles["L-Knee"][0]),
-                    int(angles["R-Knee"][0]),
-                ])
-                last_saved_time = current_time
+                print(f"not correct view for {vv}")
+                continue
 
+            ps.check_pos(pos_name, angles, frame, v)
+
+            if v == "FRONT VIEW":
+                current_time = time.time_ns() // 1_000_000
+                if current_time - last_saved_time >= 500:
+                    csv_writer.writerow([
+                        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        int(angles["L-Elbow"][0]),
+                        int(angles["R-Elbow"][0]),
+                        int(angles["L-Shoulder"][0]),
+                        int(angles["R-Shoulder"][0]),
+                        int(angles["L-Hip"][0]),
+                        int(angles["R-Hip"][0]),
+                        int(angles["L-Knee"][0]),
+                        int(angles["R-Knee"][0]),
+                    ])
+                    last_saved_time = current_time
+
+            elif v == "SIDE VIEW":
+                print(csv_writer)
+                current_time = time.time_ns() // 1_000_000
+                if current_time - last_saved_time >= 500:
+                    print("ok")
+                    csv_writer.writerow([
+                        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        int(angles["R-Elbow"][0]),
+                        int(angles["R-Shoulder"][0]),
+                        int(angles["R-Hip"][0]),
+                        int(angles["R-Knee"][0]),
+                    ])
+                    last_saved_time = current_time
             mp_draw.draw_landmarks(
                 frame,
                 results.pose_landmarks,

@@ -1,10 +1,6 @@
 NOTE='\033[0;36m'
 ENDNOTE='\033[0m'
 
-echo -e "${NOTE}running real-time feedback system${ENDNOTE}"
-/usr/local/bin/python3.11 det_angles.py
-
-echo -e "${NOTE}frame data saved in angles.csv${ENDNOTE}"
 echo -e "${NOTE}now we compress the frame data${ENDNOTE}"
 node compress.js
 
@@ -18,7 +14,9 @@ echo -e "${NOTE}open server on port 60000${ENDNOTE}"
 read -p "press enter to continue"
 
 echo -e "${NOTE}open client${ENDNOTE}"
-./client 127.0.0.1 angles_compressed.csv
+./client 127.0.0.1 front_compressed.csv
+./client 127.0.0.1 side_compressed.csv
+./client 127.0.0.1 end
 
 cd serv_dir
 
